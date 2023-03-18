@@ -1,0 +1,6 @@
+name: T14D3Core
+version: '${project.version}'
+main: io.github.t14d3core.T14D3Core
+api-version: 1.19
+authors: [T14D3]
+description: Test-Plugin
