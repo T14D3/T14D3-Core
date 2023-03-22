@@ -13,6 +13,10 @@ public class T14D3Core extends JavaPlugin {
         // Register the load inventory command
         LoadInvCommand loadInvCommand = new LoadInvCommand(this);
         getCommand("tloadinv").setExecutor(loadInvCommand);
+
+        // Register the tbuild command
+        TBuildCommand tBuildCommand = new TBuildCommand(this);
+        getCommand("tbuild").setExecutor(tBuildCommand);
     }
 
     @Override
