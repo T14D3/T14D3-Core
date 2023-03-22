@@ -1,17 +1,25 @@
 package io.github.t14d3core;
-
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+import java.io.File;
+import java.io.IOException;
 
-public final class T14D3Core extends JavaPlugin {
+public class T14D3Core extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        // Plugin startup logic
-
+        getCommand("tsaveinv").setExecutor(new SaveInvCommand());
     }
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
+        // plugin shutdown logic
     }
+
+
 }
+

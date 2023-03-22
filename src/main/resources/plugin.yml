@@ -4,3 +4,7 @@ main: io.github.t14d3core.T14D3Core
 api-version: 1.19
 authors: [T14D3]
 description: Test-Plugin
+commands:
+  tsaveinv:
+    description: Save player inventory
+    usage: /tsaveinv
