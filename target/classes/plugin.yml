@@ -1,5 +1,5 @@
 name: T14D3Core
-version: '${project.version}'
+version: '1.0-SNAPSHOT'
 main: io.github.t14d3core.T14D3Core
 api-version: 1.19
 authors: [T14D3]
