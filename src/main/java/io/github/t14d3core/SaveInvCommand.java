@@ -1,5 +1,6 @@
 package io.github.t14d3core;
 
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -30,6 +31,11 @@ public class SaveInvCommand implements CommandExecutor {
             sender.sendMessage("Only players can execute this command.");
             return true;
         }
+        if (!sender.hasPermission("t14d3core.saveinv")) {
+            sender.sendMessage(ChatColor.RED + "You do not have permission to use this command!");
+            return true;
+        }
+
 
         Player player = (Player) sender;
         UUID uuid = player.getUniqueId();

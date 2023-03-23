@@ -1,5 +1,6 @@
 package io.github.t14d3core;
 
+import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -30,6 +31,11 @@ public class LoadInvCommand implements CommandExecutor {
             sender.sendMessage("Only players can execute this command.");
             return true;
         }
+        if (!sender.hasPermission("t14d3core.loadinv")) {
+            sender.sendMessage(ChatColor.RED + "You do not have permission to use this command!");
+            return true;
+        }
+
 
         Player player = (Player) sender;
         UUID uuid = player.getUniqueId();

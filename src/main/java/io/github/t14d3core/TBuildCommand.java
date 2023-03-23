@@ -1,5 +1,6 @@
 package io.github.t14d3core;
 
+import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -20,6 +21,11 @@ public class TBuildCommand implements CommandExecutor {
             sender.sendMessage("Only players can execute this command.");
             return true;
         }
+        if (!sender.hasPermission("t14d3core.tbuild")) {
+            sender.sendMessage(ChatColor.RED + "You do not have permission to use this command!");
+            return true;
+        }
+
 
         Player player = (Player) sender;
         GameMode currentMode = player.getGameMode();
