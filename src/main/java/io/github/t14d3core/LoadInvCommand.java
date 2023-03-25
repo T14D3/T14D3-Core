@@ -10,7 +10,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.Statistic;
 
 import java.io.File;
 import java.util.List;
@@ -24,7 +23,6 @@ public class LoadInvCommand implements CommandExecutor {
     public LoadInvCommand(T14D3Core plugin) {
         this.plugin = plugin;
     }
-
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
@@ -36,8 +34,13 @@ public class LoadInvCommand implements CommandExecutor {
             return true;
         }
 
-
         Player player = (Player) sender;
+        loadInventory(player);
+
+        return true;
+    }
+
+    public void loadInventory(Player player) {
         UUID uuid = player.getUniqueId();
         GameMode gameMode = player.getGameMode();
 
@@ -54,9 +57,16 @@ public class LoadInvCommand implements CommandExecutor {
 
         YamlConfiguration playerData = YamlConfiguration.loadConfiguration(playerFile);
 
+        // Clear the player's inventory before setting the new contents
+        player.getInventory().clear();
+
         // Set the player's inventory contents
-        ItemStack[] inventoryContents = ((List<ItemStack>) playerData.getList("inventory")).toArray(new ItemStack[0]);
-        player.getInventory().setContents(inventoryContents);
+        List<Map<String, Object>> inventoryContents = (List<Map<String, Object>>) playerData.getList("inventory");
+        for (Map<String, Object> itemData : inventoryContents) {
+            ItemStack item = (ItemStack) itemData.get("item");
+            int slot = (int) itemData.get("slot");
+            player.getInventory().setItem(slot, item);
+        }
 
         // Set the player's armor contents
         ItemStack[] armorContents = ((List<ItemStack>) playerData.getList("armor")).toArray(new ItemStack[0]);
@@ -91,7 +101,5 @@ public class LoadInvCommand implements CommandExecutor {
         }
 
         player.sendMessage("Your inventory has been loaded.");
-
-        return true;
     }
 }

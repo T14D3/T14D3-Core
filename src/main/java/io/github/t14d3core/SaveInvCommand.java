@@ -36,8 +36,14 @@ public class SaveInvCommand implements CommandExecutor {
             return true;
         }
 
-
         Player player = (Player) sender;
+        saveInventory(player);
+
+        return true;
+    }
+
+    public void saveInventory(Player player) {
+
         UUID uuid = player.getUniqueId();
         String folderName = player.getGameMode().name().toLowerCase(); // Get the game mode folder name
         File dataFolder = new File(plugin.getDataFolder(), folderName); // Append the folder name to the data folder
@@ -48,13 +54,18 @@ public class SaveInvCommand implements CommandExecutor {
         YamlConfiguration playerData = new YamlConfiguration();
 
         // Save the player's inventory contents
-        List<ItemStack> inventoryContents = new ArrayList<>();
-        for (ItemStack item : player.getInventory().getContents()) {
+        List<Map<String, Object>> inventoryContents = new ArrayList<>();
+        for (int i = 0; i < player.getInventory().getSize(); i++) {
+            ItemStack item = player.getInventory().getItem(i);
             if (item != null) {
-                inventoryContents.add(item);
+                Map<String, Object> itemData = new HashMap<>();
+                itemData.put("item", item);
+                itemData.put("slot", i);
+                inventoryContents.add(itemData);
             }
         }
         playerData.set("inventory", inventoryContents);
+
 
         // Save the player's armor contents
         List<ItemStack> armorContents = new ArrayList<>();
@@ -99,7 +110,5 @@ public class SaveInvCommand implements CommandExecutor {
         }
 
         player.sendMessage("Your inventory has been saved.");
-
-        return true;
     }
 }

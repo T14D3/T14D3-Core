@@ -1,8 +1,11 @@
 package io.github.t14d3core;
 
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class T14D3Core extends JavaPlugin {
+
+    private GameModeChangeListener listener;
 
     @Override
     public void onEnable() {
@@ -15,8 +18,12 @@ public class T14D3Core extends JavaPlugin {
         getCommand("tloadinv").setExecutor(loadInvCommand);
 
         // Register the tbuild command
-        TBuildCommand tBuildCommand = new TBuildCommand(this);
+        TBuildCommand tBuildCommand = new TBuildCommand(loadInvCommand, saveInvCommand);
         getCommand("tbuild").setExecutor(tBuildCommand);
+
+        // Register the event listener
+        listener = new GameModeChangeListener(this);
+        Bukkit.getPluginManager().registerEvents(listener, this);
     }
 
     @Override

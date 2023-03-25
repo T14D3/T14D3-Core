@@ -9,13 +9,34 @@ import org.bukkit.entity.Player;
 
 public class TBuildCommand implements CommandExecutor {
 
-    private final T14D3Core plugin;
+    private static SaveInvCommand saveInvCommand = null;
+    private static LoadInvCommand loadInvCommand = null;
 
-    public TBuildCommand(T14D3Core plugin) {
-        this.plugin = plugin;
+    public TBuildCommand(LoadInvCommand loadInvCommand, SaveInvCommand saveInvCommand) {
+        this.loadInvCommand = loadInvCommand;
+        this.saveInvCommand = saveInvCommand;
     }
 
-    @Override
+    public static void tbuild(Player player) {
+        GameMode currentMode = player.getGameMode();
+
+        if (currentMode == GameMode.SURVIVAL) {
+            // Save inventory and switch to creative
+            saveInvCommand.saveInventory(player);
+            player.setGameMode(GameMode.CREATIVE);
+            loadInvCommand.loadInventory(player);
+            player.sendMessage("Your inventory has been saved and loaded for building.");
+        } else if (currentMode == GameMode.CREATIVE) {
+            // Save creative inventory and switch to survival
+            saveInvCommand.saveInventory(player);
+            player.setGameMode(GameMode.SURVIVAL);
+            loadInvCommand.loadInventory(player);
+            player.sendMessage("Your creative inventory has been saved and your survival inventory has been loaded.");
+        } else {
+            player.sendMessage("You must be in either survival or creative mode to use this command.");
+        }
+    }
+
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
             sender.sendMessage("Only players can execute this command.");
@@ -26,26 +47,10 @@ public class TBuildCommand implements CommandExecutor {
             return true;
         }
 
-
         Player player = (Player) sender;
-        GameMode currentMode = player.getGameMode();
-
-        if (currentMode == GameMode.SURVIVAL) {
-            // Save inventory and switch to creative
-            plugin.getServer().dispatchCommand(player, "tsaveinv");
-            player.setGameMode(GameMode.CREATIVE);
-            plugin.getServer().dispatchCommand(player, "tloadinv");
-            player.sendMessage("Your inventory has been saved and loaded for building.");
-        } else if (currentMode == GameMode.CREATIVE) {
-            // Save creative inventory and switch to survival
-            plugin.getServer().dispatchCommand(player, "tsaveinv");
-            player.setGameMode(GameMode.SURVIVAL);
-            plugin.getServer().dispatchCommand(player, "tloadinv");
-            player.sendMessage("Your creative inventory has been saved and your survival inventory has been loaded.");
-        } else {
-            player.sendMessage("You must be in either survival or creative mode to use this command.");
-        }
+        TBuildCommand.tbuild(player);
 
         return true;
     }
 }
+
