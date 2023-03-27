@@ -1,93 +1,75 @@
 package io.github.t14d3core;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.Plugin;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerGameModeChangeEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.File;
+import java.util.UUID;
 
-public class T14D3Core extends JavaPlugin {
+public class T14D3Core extends JavaPlugin implements Listener {
 
-    private DatabaseManager dbManager;
-    private Map<String, GamemodeInventoryManager> inventoryManagers;
-    Plugin plugin = this;
-
+    private DatabaseManager databaseManager;
+    private InventoryManager inventoryManager;
 
     @Override
     public void onEnable() {
-        // Create a new instance of DatabaseManager and initialize it
-        dbManager = new DatabaseManager("localhost", "3306", "minecraft", "root", "password");
-        try {
-            dbManager.initialize();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
 
+        // Load the config file
+        File configFile = new File("config.yml");
+        YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
 
+        // Read the database connection details from the config file
+        String dbUrl = config.getString("dbUrl");
+        String dbUsername = config.getString("dbUsername");
+        String dbPassword = config.getString("dbPassword");
 
-    // Create a new HashMap to hold the inventory managers for each player
-        inventoryManagers = new HashMap<>();
+        // Initialize the database manager and inventory manager
+        databaseManager = new DatabaseManager(dbUrl, dbUsername, dbPassword);
+        inventoryManager = new InventoryManager(databaseManager);
 
-        // Register the plugin listener
-        try {
-            getServer().getPluginManager().registerEvents(new GamemodeInventoryManager((T14D3Core) inventoryManagers, (Map<String, GameModeInventory>) plugin), this);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-        // Load the inventory managers for all online players
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            GamemodeInventoryManager inventoryManager = null;
-            try {
-                inventoryManager = new GamemodeInventoryManager(this, (Map<String, GameModeInventory>) dbManager);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-            inventoryManagers.put(player.getUniqueId().toString(), inventoryManager);
-            inventoryManager.loadInventory(player, player.getGameMode());
-        }
-    }
-
-    @Override
-    public void onDisable() {
-        // Save the inventory data for all online players
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            GamemodeInventoryManager inventoryManager = inventoryManagers.get(player.getUniqueId().toString());
-            if (inventoryManager != null) {
-                inventoryManager.saveInventory(player, player.getGameMode());
-                inventoryManager.close();
-            }
-        }
-
-        // Close the database connection
-        try {
-            dbManager.close();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-
-    @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) throws SQLException {
-        // Load the inventory manager for the joining player
-        GamemodeInventoryManager inventoryManager = new GamemodeInventoryManager(this, plugin);
-        inventoryManagers.put(event.getPlayer().getUniqueId().toString(), inventoryManager);
-        inventoryManager.loadInventory(event.getPlayer(), event.getPlayer().getGameMode());
+        // Register the event listener
+        getServer().getPluginManager().registerEvents(this, this);
     }
 
     @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        // Save the inventory of the quitting player and remove their inventory manager
-        GamemodeInventoryManager inventoryManager = inventoryManagers.remove(event.getPlayer().getUniqueId().toString());
-        if (inventoryManager != null) {
-            inventoryManager.saveInventory(event.getPlayer(), event.getPlayer().getGameMode());
+    public void onPlayerGameModeChange(PlayerGameModeChangeEvent event) {
+        Player player = event.getPlayer();
+        GameMode newGameMode = event.getNewGameMode();
+        GameMode oldGameMode = player.getGameMode(); // Store the old game mode as a separate variable
+        if (newGameMode == GameMode.CREATIVE && oldGameMode == GameMode.SURVIVAL) {
+            // Save the player's survival inventory to a database
+            UUID playerId = player.getUniqueId();
+            String serializedInventory = InventorySerializer.serializeInventory(player.getInventory().getContents());
+            inventoryManager.saveInventory(player, "survival", player.getInventory().getContents());
+            // Load the player's creative inventory from the database
+            String creativeInventory = inventoryManager.loadInventory(playerId, "creative");
+            if (creativeInventory != null) {
+                player.getInventory().clear();
+                ItemStack[] inventoryContents = InventorySerializer.deserializeInventory(creativeInventory);
+                player.getInventory().setContents(inventoryContents);
+            }
+        } else if (newGameMode == GameMode.SURVIVAL && oldGameMode == GameMode.CREATIVE) {
+            // Save the player's creative inventory to a database
+            UUID playerId = player.getUniqueId();
+            String serializedInventory = InventorySerializer.serializeInventory(player.getInventory().getContents());
+            inventoryManager.saveInventory(playerId, "creative", serializedInventory);
+            // Load the player's survival inventory from the database
+            String survivalInventory = inventoryManager.loadInventory(playerId, "survival");
+            if (survivalInventory != null) {
+                player.getInventory().clear();
+                ItemStack[] inventoryContents = InventorySerializer.deserializeInventory(survivalInventory);
+                player.getInventory().setContents(inventoryContents);
+            }
         }
     }
+
+
+
 }
